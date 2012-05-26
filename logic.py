@@ -24,7 +24,7 @@ def start_turn(db, game, actions):
 	# where the keys are player ids, and the values are lists of actions taken,
 	# each action is a dict which has an 'action' key (which can be 'purchase-pr', 'trade', etc.)
 
-	def trade_for(requirements):
+	def trade_for(requirements, resource_values = ["coffee", "feature", "website", "idea", "cash"]):
 		# This just figures out how much I can give away without harming the minimum requirements
 		# then offers everything extra I have for everything I need.
 		# It's very dumb, you should replace it
@@ -40,29 +40,33 @@ def start_turn(db, game, actions):
 					offer[resource] = to_offer
 
 		if sum(offer.values()) == 0 or sum(request.values()) == 0:
+			print "Nothing to trade"
 			return False
 
 		while sum(offer.values()) > (sum(request.values()) + 1):
-			key = offer.keys()[0]
-			offer[key] -= 1
-			if offer[key] == 0:
-				del offer[key]
+			print "Let's reduce our offer"
+			# Remove in order of how much I value them
+			for key in resource_values:
+				if key in offer:
+					offer[key] -= 1
+					if offer[key] == 0:
+						del offer[key]
+					break
 
 		return game.trade(offer, request)
 
 	### First try to trade for resources I need
 
-	if sum(game.generators.values()) < MAX_RESOURCE_GENERATORS:
+	if sum(game.generators.values()) < MAX_RESOURCE_GENERATORS: # First buy all of them
 		# Can build generators - try to trade for them
 		if trade_for(GENERATOR_COST):
 			taking_turn = True
-
-	if sum(game.improved_generators.values()) < MAX_IMPROVED_RESOURCE_GENERATORS:
+	elif sum(game.improved_generators.values()) < MAX_IMPROVED_RESOURCE_GENERATORS: # Then upgrade
 		# Can improve one of our existing ones
 		if trade_for(GENERATOR_IMPROVEMENT_COST):
 			taking_turn = True
 
-	trade_for(PR_COST)
+	# trade_for(PR_COST)
 
 	# Then spend the resources
 
@@ -74,9 +78,9 @@ def start_turn(db, game, actions):
 		generator_type = game.upgrade_generator()
 		print "Upgraded %s" % generator_type
 
-	while game.can_purchase_pr() and game.turn:
-		game.purchase_pr()
-		print "Purchased PR"
+	# while game.can_purchase_pr() and game.turn:
+	# 	game.purchase_pr()
+	# 	print "Purchased PR"
 
 	if game.turn:
 		game.end_turn()
