@@ -39,6 +39,15 @@ def start_turn(db, game, actions):
 				if to_offer > 0:
 					offer[resource] = to_offer
 
+		if sum(offer.values()) == 0 or sum(request.values()) == 0:
+			return False
+
+		while sum(offer.values()) > (sum(request.values()) + 1):
+			key = offer.keys()[0]
+			offer[key] -= 1
+			if offer[key] == 0:
+				del offer[key]
+
 		return game.trade(offer, request)
 
 	### First try to trade for resources I need
