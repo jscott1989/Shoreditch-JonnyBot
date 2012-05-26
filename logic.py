@@ -74,7 +74,7 @@ def start_turn(db, game, actions):
 		# Figure out priorities based on if I have a generator or not
 		trading_priority = calculate_trading_priority(game, ["coffee", "website", "idea", "cash"])
 		trading_priority.append("feature")
-		
+
 		trade_for(GENERATOR_COST, trading_priority)
 	elif sum(game.improved_generators.values()) < MAX_IMPROVED_RESOURCE_GENERATORS: # Then upgrade
 		# Can improve one of our existing ones
@@ -112,7 +112,17 @@ def end_game(db, game, error=None):
 		print "Game over"
 
 def incoming_trade(db, game, player, offering, requesting):
-	# As long as I'm gaining at least one resource more than I'm giving away, I'll accept
-	if sum(offering.values()) > sum(requesting.values()):
-		return True
-	return False
+	if sum(game.generators.values()) < MAX_RESOURCE_GENERATORS:
+		requirements = GENERATOR_COST
+	elif sum(game.improved_generators.values()) < MAX_IMPROVED_RESOURCE_GENERATORS:
+		requirements = GENERATOR_IMPROVEMENT_COST
+
+	for resource in requesting:
+		if requesting[resource] > game.resources.get(resource, 0) - requirements.get(resource, 0):
+			return False # If I can't afford this trade without losing something I need, reject
+
+	for resource in offering:
+		if game.resources.get(resource, 0) - requirements.get(resource, 0) < 0:
+			return True # If I'm getting at least one resource I need, accept
+
+	return False # Otherwise, no point, reject
