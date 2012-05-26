@@ -15,6 +15,17 @@ def start_game(db, game):
 	# A new game is starting
 	print "Starting a game"
 
+
+def calculate_trading_priority(game, resources):
+	########
+	### Figure out which of these resources is more important based on how many I have and
+	### how many generators I have
+	########
+	def sort_trade_priority(resource):
+		return (game.generators.get(resource, 0), game.resources.get(resource, 0))
+	priority = sorted(resources, key=sort_trade_priority)
+	return priority
+
 def start_turn(db, game, actions):
 	# Start of a turn
 	# We have to end the turn with game.end_turn() when we're done
@@ -59,12 +70,17 @@ def start_turn(db, game, actions):
 
 	if sum(game.generators.values()) < MAX_RESOURCE_GENERATORS: # First buy all of them
 		# Can build generators - try to trade for them
-		if trade_for(GENERATOR_COST, ["coffee", "website", "idea", "cash", "feature"]):
-			taking_turn = True
+
+		# Figure out priorities based on if I have a generator or not
+		trading_priority = calculate_trading_priority(game, ["coffee", "website", "idea", "cash"])
+		trading_priority.append("feature")
+		
+		trade_for(GENERATOR_COST, trading_priority)
 	elif sum(game.improved_generators.values()) < MAX_IMPROVED_RESOURCE_GENERATORS: # Then upgrade
 		# Can improve one of our existing ones
-		if trade_for(GENERATOR_IMPROVEMENT_COST):
-			taking_turn = True
+		trading_priority = calculate_trading_priority(game, ["feature", "coffee"])
+		trading_priority.extend(calculate_trading_priority(game, ["website", "idea", "cash"]))
+		trade_for(GENERATOR_IMPROVEMENT_COST, trading_priority)
 
 	# trade_for(PR_COST)
 
