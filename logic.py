@@ -59,7 +59,7 @@ def start_turn(db, game, actions):
 
 	if sum(game.generators.values()) < MAX_RESOURCE_GENERATORS: # First buy all of them
 		# Can build generators - try to trade for them
-		if trade_for(GENERATOR_COST):
+		if trade_for(GENERATOR_COST, ["coffee", "website", "idea", "cash", "feature"]):
 			taking_turn = True
 	elif sum(game.improved_generators.values()) < MAX_IMPROVED_RESOURCE_GENERATORS: # Then upgrade
 		# Can improve one of our existing ones
